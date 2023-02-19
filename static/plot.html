@@ -1,0 +1,42 @@
+<html><head>
+<script src="uPlot/dist/uPlot.iife.js"></script>
+<script>
+	let opts = {
+		title: "Test Chart",
+		id: "chart1",
+		class: "mychart",
+		width: 200,
+		height: 160,
+		series: [
+			{
+				scale: "milliseconds",
+			},
+			{
+				scale: "acceleration",
+				label: "X",
+				value: (self, rawValue) => rawvalue.toFixed(2),
+				stroke:"red",
+				width: 1,
+			},
+		],
+		scales: {
+			"milliseconds": {
+				time: false,
+			},
+			"acceleration": {
+				auto: false,
+				range: [-2, 2]
+			},
+		},
+	}
+	fetch("/data")
+		.then((response) => response.json())
+		.then((data) => new uPlot(opts, data, document.body));
+		//.then((data) => document.getElementById("debug").innerHTML = data);
+</script></head>
+<body>
+
+<div id="debug"></div>
+
+</body></html>
+
