@@ -1,4 +1,4 @@
-** uPlot demo **
+## uPlot demo ##
 
 To try this demo, install the requirements and run
 `uvicorn main:app --reload`
