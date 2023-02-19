@@ -1,21 +1,31 @@
 <html><head>
+<link rel="stylesheet" href="/static/uPlot/dist/uPlot.min.css">
 <script src="uPlot/dist/uPlot.iife.js"></script>
 <script>
 	let opts = {
-		title: "Test Chart",
+		title: "Acceleration",
 		id: "chart1",
 		class: "mychart",
-		width: 200,
-		height: 160,
+		width: 500,
+		height: 400,
 		series: [
 			{
 				scale: "milliseconds",
-			},
-			{
+				label: "time (ms)",
+			},{
 				scale: "acceleration",
 				label: "X",
-				value: (self, rawValue) => rawvalue.toFixed(2),
 				stroke:"red",
+				width: 1,
+			},{
+				scale: "acceleration",
+				label: "Y",
+				stroke:"green",
+				width: 1,
+			},{
+				scale: "acceleration",
+				label: "Z",
+				stroke:"blue",
 				width: 1,
 			},
 		],
@@ -35,8 +45,6 @@
 		//.then((data) => document.getElementById("debug").innerHTML = data);
 </script></head>
 <body>
-
-<div id="debug"></div>
 
 </body></html>
 
