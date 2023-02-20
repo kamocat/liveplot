@@ -34,8 +34,8 @@ async def data():
 
     return [t,x,y,z]
     
-@app.get("/log")
+@app.get("/log.csv")
 async def log():
     # This isn't actual data, we just need it to test the javascript
     data = "1,2,3,4\n"
-    return  Response(content=data, media_type="text/plain")
+    return  Response(content=data, media_type="stream/octet")

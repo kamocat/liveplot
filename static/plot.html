@@ -1,4 +1,13 @@
 <html><head>
+<style>
+button{
+	width: 40%;
+	padding: 1em;
+}
+#dl{
+	float: right;
+}
+</style>
 <link rel="stylesheet" href="/static/uPlot/dist/uPlot.min.css">
 <script src="/static/uPlot/dist/uPlot.iife.js"></script>
 <script>
@@ -91,7 +100,7 @@
 	function toggle_recording() {
 		button = document.getElementById("ctrl");
 		if(recording){ //Recording is completed. Start the download. 
-			file = new Blob(pretty(transpose(og)), {type:"text/plain"});
+			file = new Blob(pretty(transpose(og)), {type:"octet/stream"});
 			window.open(URL.createObjectURL(file));
 			button.innerText = "Start Recording";
 			recording = false;
@@ -105,5 +114,6 @@
 <body>
 <div id="chart1"></div>
 <button id="ctrl" onclick="toggle_recording()">Start Recording</button>
+<a href="/log.csv"><button id="dl">Download Entire Log</button></a>
 </body></html>
 
