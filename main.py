@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.staticfiles import StaticFiles
 from math import sin, floor
 from time import time
@@ -11,7 +11,9 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/")
 async def root():
-    return {"message": "Hello World"}
+    # Serve a static file
+    with open("static/plot.html", encoding="utf-8") as f:
+        return Response(content=f.read(), media_type="text/html")
 
 @app.get("/data")
 async def data():
@@ -31,4 +33,7 @@ async def data():
 
     return [t,x,y,z]
     
-
+@app.get("/log.csv")
+async def log():
+    # This isn't actual data, we just need it to test the javascript
+    pass
