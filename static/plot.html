@@ -76,14 +76,20 @@
 
 		// Assume first array (time axis) is monotonic
 
+	function transpose(matrix) {
+  		return matrix[0].map((col, i) => matrix.map(row => row[i]));
+	}
 
 	let recording = false;
 	function toggle_recording() {
 		button = document.getElementById("ctrl");
-		if(recording){
+		if(recording){ //Recording is completed. Start the download. 
+			file = new Blob(transpose(og), {type:"text/plain"});
+			window.open(URL.createObjectURL(file));
 			button.innerText = "Start Recording";
 			recording = false;
-		} else {
+		} else { // Begin the recording
+			og = false;
 			button.innerText = "Download";
 			recording = true;
 		}
