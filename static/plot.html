@@ -44,19 +44,53 @@
 	async function loop(){
 		let plot = await fetch(source)
 			.then((response) => response.json())
-			.then((data) => new uPlot(opts, data, document.body));
+			.then((data) => new uPlot(opts, data, document.getElementById("chart1")));
 		for(;;){
 			// Our loop is most likely limited by network delay
 			// So no need to use requestAnimationFrame()
 			await fetch(source)
 				.then((response) => response.json())
-				.then((data) => plot.setData(data));
+				.then((data) => {plot.setData(data); append(data);});
 		}
 
 	}
 	loop();
+
+	let og = false;
+	function append(nw){
+		if(!recording){
+			return;
+		}else if(og == false){
+			og = nw.concat([]);
+		} else {
+			most_recent = og[0].slice(-1);
+			ni = nw[0].findIndex(function(time){
+				return time > most_recent;
+			});
+			for(let i=0; i < nw.length; i++){
+				og[i] = og[i].concat(nw[i].slice(ni,-1));
+			}
+		}
+	}
+
+
+		// Assume first array (time axis) is monotonic
+
+
+	let recording = false;
+	function toggle_recording() {
+		button = document.getElementById("ctrl");
+		if(recording){
+			button.innerText = "Start Recording";
+			recording = false;
+		} else {
+			button.innerText = "Download";
+			recording = true;
+		}
+	}
 </script></head>
 <body>
-
+<div id="chart1"></div>
+<button id="ctrl" onclick="toggle_recording()">Start Recording</button>
 </body></html>
 
