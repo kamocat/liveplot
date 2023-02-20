@@ -25,11 +25,12 @@ async def data():
     for a in range(1000):
         a *= 0.01
         a += offset
+        a = round(a, 3);
         t.append(a)
         w = 1
-        x.append(sin(a*w))
-        y.append(sin(a*w+1.4))
-        z.append(sin(a*w+2.5))
+        x.append(round(sin(a*w),3))
+        y.append(round(sin(a*w+1.4),3))
+        z.append(round(sin(a*w+2.5),3))
 
     return [t,x,y,z]
     
