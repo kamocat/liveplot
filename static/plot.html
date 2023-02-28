@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html><head>
 <style>
 button{
@@ -6,6 +7,7 @@ button{
 }
 #dl{
 	float: right;
+  display: none;
 }
 </style>
 <link rel="stylesheet" href="/static/uPlot/dist/uPlot.min.css">
@@ -15,8 +17,8 @@ button{
 		title: "Acceleration",
 		id: "chart1",
 		class: "mychart",
-		width: 500,
-		height: 400,
+		width: window.innerWidth,
+		height: window.innerHeight*0.8,
 		series: [
 			{
 				scale: "seconds",
@@ -44,7 +46,7 @@ button{
 			},
 			"acceleration": {
 				auto: false,
-				range: [-2, 2]
+				range: [-16, 16]
 			},
 		},
 	}

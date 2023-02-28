@@ -22,15 +22,16 @@ async def data():
     y = []
     z = []
     offset = time() - initial_time
-    for a in range(1000):
+    for a in range(400):
         a *= 0.01
         a += offset
         a = round(a, 3);
         t.append(a)
         w = 1
-        x.append(round(sin(a*w),3))
-        y.append(round(sin(a*w+1.4),3))
-        z.append(round(sin(a*w+2.5),3))
+        amp = 15
+        x.append(round(amp*sin(a*w),3))
+        y.append(round(amp*sin(a*w+1.4),3))
+        z.append(round(amp*sin(a*w+2.5),3))
 
     return [t,x,y,z]
     
