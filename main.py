@@ -15,25 +15,17 @@ async def root():
     # Serve a static file
     return FileResponse(path="static/plot.html", media_type="text/html")
 
-@app.get("/data")
-async def data():
-    t = []
-    x = []
-    y = []
-    z = []
-    offset = time() - initial_time
-    for a in range(400):
-        a *= 0.01
-        a += offset
-        a = round(a, 3);
-        t.append(a)
-        w = 1
+@app.get("/data/{t0}")
+async def data(t0:int):
+    data = {"t0":t0, "period":0.01, "x":[], "y":[], "z":[]}
+    for a in range(60):
+        a += t0 
+        w = 0.01
         amp = 15
-        x.append(round(amp*sin(a*w),3))
-        y.append(round(amp*sin(a*w+1.4),3))
-        z.append(round(amp*sin(a*w+2.5),3))
-
-    return [t,x,y,z]
+        data['x'].append(round(amp*sin(a*w),3))
+        data['y'].append(round(amp*sin(a*w+1.4),3))
+        data['z'].append(round(amp*sin(a*w+2.5),3))
+    return data
     
 @app.get("/log.csv")
 async def log():
