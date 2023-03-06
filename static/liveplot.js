@@ -47,18 +47,27 @@ async function getData(t0){
 	});
 }
 
+var stats;
+
 function printStats(data){
 	axes = ['X','Y','Z'];
 	let s = '';
+	stats = data.slice(1,4).map(a => [Math.min(...a),Math.max(...a)]);
 	for(let i=0; i<3; ++i){
-		s += axes[i]+' Min:'+Math.min(...data[i+1])+"<br>";
-		s += axes[i]+' Max:'+Math.max(...data[i+1])+"<br>";
+		s += axes[i]+'_Min:'+stats[i][0]+"<br>";
+		s += axes[i]+'_Max:'+stats[i][1]+"<br>";
 	}
 	let e = document.getElementById("stats");
 	e.innerHTML = s;
 }
 
-
+function autorange(){
+	let x_min = stats[0][0];
+	let x_max = stats[0][1];
+	margin = 0.1 * (x_max - x_min);
+	document.getElementById("minv").value = x_min - margin;
+	document.getElementById("maxv").value = Number(x_max) + margin;
+}
 
 
 async function loop(){
@@ -101,6 +110,7 @@ var logged=[[],[],[],[]];
 let timeout=0;
 function logData(newdata){
 	enabled = document.getElementById("en").checked;
+	notEmpty = logged[0].length > 0;
 	//For now, only works with X axis
 	if(enabled){
 		if((Math.min(...newdata[1])<document.getElementById("minv").value)
@@ -109,7 +119,7 @@ function logData(newdata){
 		 } else {
 			 ++timeout;
 		 }
-		if(timeout > document.getElementById("timeout")){
+		if(notEmpty && (timeout > document.getElementById("timeout").value)){
 			save_recording(logged);
 			logged=[[],[],[],[]];
 		} else {
@@ -118,7 +128,7 @@ function logData(newdata){
 				logged[i] = a.slice(-6000,-1);
 			}
 		}
-	} else if(logged[0].length > 0){
+	} else if(notEmpty){
 		save_recording(logged);
 		logged=[[],[],[],[]];
 	}

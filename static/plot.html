@@ -6,7 +6,7 @@ button{
 	padding: 1em;
 }
 input{
-	width:49%;
+	width:40%;
 }
 label{
 	width:49%;
@@ -26,21 +26,19 @@ label{
 <body>
 <div id="sidebar">
 	<h2>Trigger</h2>
-	<form>
 	<label for="en">Enable</label>
 	<input type="checkbox" id="en" name="en"><br>
 	<label for="minv">Min</label>
-	<input type="number" id="minv" name="minv" step=1>
+	<input type="number" id="minv" name="minv" step=1><br>
 	<label for="minv">Max</label>
 	<input type="number" id="maxv" name="maxv" step=1><br>
-	<input type="button" id="autorange" name="autorange" value="Autorange" onclick="autorange()"><br>
+	<button id="autorange" onclick="autorange()">Autorange</button><br>
 	<label for="timeout">Timeout</label>
-	<input title="Number of samples inside the window before capture is completed" type="number" id="timeout" name="timeout" step=1>
-	</form>
+	<input title="Number of samples inside the window before capture is completed" type="number" id="timeout" name="timeout" value=500>
 	<h2>Stats</h2>
 	<p id="stats"></p>
 	
-<h2>Downloads</h2>
+<h2>Logs</h2>
 <ol id="dl"></ol>
 </div>
 <div id="chart1"></div>
