@@ -30,8 +30,7 @@ const opts = {
 			time: false,
 		},
 		"acceleration": {
-			auto: false,
-			range: [-16, 16]
+			auto: true,
 		},
 	},
 }
@@ -59,6 +58,9 @@ function printStats(data){
 	e.innerHTML = s;
 }
 
+
+
+
 async function loop(){
 	let data = await getData(0);
 	let plot = new uPlot(opts, data, document.getElementById("chart1"));
@@ -72,7 +74,7 @@ async function loop(){
 		}
 		printStats(data);
 		plot.setData(data);
-		//save_recording(data);
+		logData(newdata);
 		await new Promise(r => setTimeout(r, 2000)); //For testing
 		await new Promise(r => requestAnimationFrame(r));//For production
 	}
@@ -89,9 +91,36 @@ function pretty(matrix) {
 }
 
 function save_recording(data) {
-	enabled = document.getElementById("en").checked;
 	file = new Blob(pretty(transpose(data)), {type:"octet/stream"});
 	tag = document.createElement("li");
 	tag.innerHTML = '<a href="'+URL.createObjectURL(file)+'" download="acceleration_log.csv">Download</a>';
 	document.getElementById("dl").appendChild(tag);
 }
+
+var logged=[[],[],[],[]];
+let timeout=0;
+function logData(newdata){
+	enabled = document.getElementById("en").checked;
+	//For now, only works with X axis
+	if(enabled){
+		if((Math.min(...newdata[1])<document.getElementById("minv").value)
+		 || (Math.max(...newdata[1])>document.getElementById("maxv").value)){
+			 timeout=0;
+		 } else {
+			 ++timeout;
+		 }
+		if(timeout > document.getElementById("timeout")){
+			save_recording(logged);
+			logged=[[],[],[],[]];
+		} else {
+			for(let i = 0; i < newdata.length; ++i){
+				let a = logged[i].concat(newdata[i]);
+				logged[i] = a.slice(-6000,-1);
+			}
+		}
+	} else if(logged[0].length > 0){
+		save_recording(logged);
+		logged=[[],[],[],[]];
+	}
+}
+
