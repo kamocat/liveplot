@@ -21,10 +21,12 @@ async def data(t0:int):
     for a in range(60):
         a += t0 
         w = 0.01
-        amp = 15
-        data['x'].append(round(amp*sin(a*w),3))
-        data['y'].append(round(amp*sin(a*w+1.4),3))
-        data['z'].append(round(amp*sin(a*w+2.5),3))
+        amp = 1000
+        w2 = 0.00001
+        amp2 = 10000
+        data['x'].append(int(amp2*sin(a*w2)*sin(a*w)))
+        data['y'].append(int(amp*sin(a*w+1.4)))
+        data['z'].append(int(amp*sin(a*w+2.5)))
     return data
     
 @app.get("/log.csv")
