@@ -2,7 +2,7 @@ const opts = {
 	title: "Acceleration",
 	id: "chart1",
 	class: "mychart",
-	width: window.innerWidth,
+	width: window.innerWidth*0.7,
 	height: window.innerHeight*0.8,
 	series: [
 		{
@@ -48,22 +48,34 @@ async function getData(t0){
 	});
 }
 
+function printStats(data){
+	axes = ['X','Y','Z'];
+	let s = '';
+	for(let i=0; i<3; ++i){
+		s += axes[i]+' Min:'+Math.min(...data[i+1])+"<br>";
+		s += axes[i]+' Max:'+Math.max(...data[i+1])+"<br>";
+	}
+	let e = document.getElementById("stats");
+	e.innerHTML = s;
+}
+
 async function loop(){
 	let data = await getData(0);
 	let plot = new uPlot(opts, data, document.getElementById("chart1"));
 	for(;;){
-		// Our loop is most likely limited by network delay
-		// So no need to use requestAnimationFrame()
 		let t0 = Number(data[0].slice(-1))+1;
 		console.log(t0);
 		let newdata = await getData(t0);
 		for(let i = 0; i < data.length; ++i){
 			let a = data[i].concat(newdata[i]);
-			data[i] = a.slice(-1000,-1);
+			data[i] = a.slice(-6000,-1);
 		}
+		printStats(data);
 		plot.setData(data);
+		//save_recording(data);
+		await new Promise(r => setTimeout(r, 2000)); //For testing
+		await new Promise(r => requestAnimationFrame(r));//For production
 	}
-
 }
 loop();
 
@@ -76,19 +88,10 @@ function pretty(matrix) {
 	return matrix.map(row => row+'\r\n');
 }
 
-	
-
-var recording = false;
-function toggle_recording() {
-	button = document.getElementById("ctrl");
-	if(recording){ //Recording is completed. Start the download. 
-		file = new Blob(pretty(transpose(og)), {type:"octet/stream"});
-  document.getElementById("dl").href=URL.createObjectURL(file);
-		button.innerText = "Start Recording";
-		recording = false;
-	} else { // Begin the recording
-		og = false;
-		button.innerText = "Recording...";
-		recording = true;
-	}
+function save_recording(data) {
+	enabled = document.getElementById("en").checked;
+	file = new Blob(pretty(transpose(data)), {type:"octet/stream"});
+	tag = document.createElement("li");
+	tag.innerHTML = '<a href="'+URL.createObjectURL(file)+'" download="acceleration_log.csv">Download</a>';
+	document.getElementById("dl").appendChild(tag);
 }

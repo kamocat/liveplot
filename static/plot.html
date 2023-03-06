@@ -5,14 +5,44 @@ button{
 	width: 40%;
 	padding: 1em;
 }
+input{
+	width:49%;
+}
+label{
+	width:49%;
+}
+#autorange{
+	width:100%;
+}
+#sidebar{
+	float:right;
+	width: 20%;
+}
 </style>
 <link rel="stylesheet" href="/static/uPlot/dist/uPlot.min.css">
 <script src="/static/uPlot/dist/uPlot.iife.js"></script>
 <script src="/static/liveplot.js"></script>
 </head>
 <body>
+<div id="sidebar">
+	<h2>Trigger</h2>
+	<form>
+	<label for="en">Enable</label>
+	<input type="checkbox" id="en" name="en"><br>
+	<label for="minx">Min</label>
+	<input type="number" id="minv" name="minv" step=1>
+	<label for="minx">Max</label>
+	<input type="number" id="maxv" name="maxv" step=1><br>
+	<input type="button" id="autorange" name="autorange" value="Autorange" onclick="autorange()"><br>
+	<label for="timeout">Timeout</label>
+	<input title="Number of samples inside the window before capture is completed" type="number" id="timeout" name="timeout" step=1>
+	</form>
+	<h2>Stats</h2>
+	<p id="stats"></p>
+	
+<h2>Downloads</h2>
+<ol id="dl"></ol>
+</div>
 <div id="chart1"></div>
-<button id="ctrl" onclick="toggle_recording()">Start Recording</button>
-<a id="dl" href="" download="acceleration_log.csv"><button>Download</button></a>
 </body></html>
 
