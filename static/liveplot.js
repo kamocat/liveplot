@@ -34,18 +34,6 @@ const opts = {
 		},
 	},
 }
-async function getData(t0){
-	return fetch("/data/"+t0)
-		.then((response) => response.json())
-		.then((data) => {
-			t = [];
-			n = data.x.length;
-			for(let i = 0; i<n; ++i){
-				t.push(i+data.t0);
-			}
-			return [t,data.x,data.y,data.z];
-	});
-}
 
 var stats;
 
@@ -71,20 +59,21 @@ function autorange(){
 
 
 async function loop(){
-	let data = await getData(0);
-	let plot = new uPlot(opts, data, document.getElementById("chart1"));
+	let stream = await fetch("/stream")
+        .then((response) => response.body.getReader());
+    let txt = new TextDecoder('UTF-8');
+    let data = await stream.read()
+        .then((d) => JSON.parse(txt.decode(d.value)).data);
+    console.log(data);
+	let plot = new uPlot(opts, transpose(data), document.getElementById("chart1"));
 	for(;;){
-		let t0 = Number(data[0].slice(-1))+1;
-		console.log(t0);
-		let newdata = await getData(t0);
-		for(let i = 0; i < data.length; ++i){
-			let a = data[i].concat(newdata[i]);
-			data[i] = a.slice(-6000,-1);
-		}
-		printStats(data);
-		plot.setData(data);
-		logData(newdata);
-		await new Promise(r => setTimeout(r, 2000)); //For testing
+        let newdata = await stream.read()
+            .then((d) => JSON.parse(txt.decode(d.value)).data);
+	    data = data.concat(newdata).slice(-6000,-1);
+		//printStats(data);
+		plot.setData(transpose(data));
+		//logData(newdata);
+		//await new Promise(r => setTimeout(r, 2000)); //For testing
 		await new Promise(r => requestAnimationFrame(r));//For production
 	}
 }
