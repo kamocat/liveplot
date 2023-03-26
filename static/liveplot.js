@@ -57,27 +57,45 @@ function autorange(){
 	document.getElementById("maxv").value = Number(x_max) + margin;
 }
 
+async function streaming_json(stream){
+    let txt = new TextDecoder('UTF-8');
+    buf = await stream.read();
+    chunks = txt.decode(buf.value).split('\n');
+    let arr = [];
+    for (const c of chunks){
+        if(c.length){
+            arr = arr.concat(JSON.parse(c).data);
+        }
+    }
+    return arr;
+}
 
 async function loop(){
 	let stream = await fetch("/stream")
         .then((response) => response.body.getReader());
-    let txt = new TextDecoder('UTF-8');
-    let data = await stream.read()
-        .then((d) => JSON.parse(txt.decode(d.value)).data);
-    console.log(data);
-	let plot = new uPlot(opts, transpose(data), document.getElementById("chart1"));
+    let data = await streaming_json(stream);
+
+	let plot = new uPlot(opts, tail(data), document.getElementById("chart1"));
 	for(;;){
-        let newdata = await stream.read()
-            .then((d) => JSON.parse(txt.decode(d.value)).data);
-	    data = data.concat(newdata).slice(-6000,-1);
+        let newdata = await streaming_json(stream);
+	    data = data.concat(newdata);
 		//printStats(data);
-		plot.setData(transpose(data));
+		plot.setData(tail(data));
 		//logData(newdata);
-		//await new Promise(r => setTimeout(r, 2000)); //For testing
 		await new Promise(r => requestAnimationFrame(r));//For production
 	}
 }
 loop();
+
+function tail(data){
+    vals = data.slice(-6000,-1);
+    let t = [];
+    for (let i = data.length - vals.length; i < data.length; ++i){
+        t.push(i*0.01);
+    }
+    t = [t].concat(transpose(vals));
+    return t;
+}
 
 function transpose(matrix) {
 	return matrix[0].map((col, i) => matrix.map(row => row[i]));
@@ -89,7 +107,7 @@ function pretty(matrix) {
 }
 
 function save_recording(data) {
-	file = new Blob(pretty(transpose(data)), {type:"octet/stream"});
+	file = new Blob(pretty(data), {type:"octet/stream"});
 	tag = document.createElement("li");
 	tag.innerHTML = '<a href="'+URL.createObjectURL(file)+'" download="acceleration_log.csv">Download</a>';
 	document.getElementById("dl").appendChild(tag);

@@ -26,15 +26,15 @@ async def wave_generator():
     i = 0
     inc = 10
     while True:
-        await asyncio.sleep(0.1)
-        chunk = [(i,
+        await asyncio.sleep(0.01)
+        chunk = [(
             int(amp2*sin(i*w2)*sin(i*w)),
             int(amp*sin(i*w+1.4)),
             int(amp*sin(i*w+2.5)))
             for i in range(i, i+inc) ]
-        data = {"axes":["t","x","y","z"],"data":chunk}
+        data = {"axes":["x","y","z"],"data":chunk}
         i += inc
-        yield json.dumps(data)
+        yield json.dumps(data) + '\n'
 
 @app.get("/stream")
 async def stream():
