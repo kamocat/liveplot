@@ -159,6 +159,7 @@ async function loop(){
   
     let data = await stream.read().then((d) => d.value)
 	let plot = new uPlot(opts, tail(data), document.getElementById("chart1"))
+    let wt = false
 	for(;;){
         await stream.read().then((d) => d.value)
             .then((newdata) => {
@@ -167,7 +168,13 @@ async function loop(){
             printStats(p)
             get_trigger()
             plot.setData(p)
-            //logData(newdata)
+            let nt = get_trigger()
+            if(nt && !wt){
+                data = data.slice(-6000,-1)
+            } else if(wt && !nt){
+                save_recording(data) // Will include 6 seconds on either side of the trigger
+            }
+            wt = nt
         })
 		await new Promise(r => requestAnimationFrame(r));//For production
 	}
