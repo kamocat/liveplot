@@ -57,31 +57,80 @@ function autorange(){
 	document.getElementById("maxv").value = Number(x_max) + margin;
 }
 
-async function streaming_json(stream){
-    let txt = new TextDecoder('UTF-8');
-    buf = await stream.read();
-    chunks = txt.decode(buf.value).split('\n');
-    let arr = [];
-    for (const c of chunks){
-        if(c.length){
-            arr = arr.concat(JSON.parse(c).data);
-        }
+/**
+ * This transformer takes binary Uint8Array chunks from a `fetch`
+ * and translates them to chunks of strings.
+ *
+ * @implements {TransformStreamTransformer}
+ */
+class Uint8ArrayToJsonTransformer {
+  constructor() {
+    this.decoder = new TextDecoder()
+    this.lastString = ''
+  }
+
+  /**
+   * Receives the next Uint8Array chunk from `fetch` and transforms it.
+   *
+   * @param {Uint8Array} chunk The next binary data chunk.
+   * @param {TransformStreamDefaultController} controller The controller to enqueue the transformed chunks to.
+   */
+  transform(chunk, controller) {
+    //console.log('Received chunk %o with %d bytes.', chunk, chunk.byteLength)
+
+    // Decode the current chunk to string and prepend the last string
+    const string = `${this.lastString}${this.decoder.decode(chunk)}`
+
+    // Extract lines from chunk
+    const lines = string.split(/\r\n|[\r\n]/g)
+
+    // Save last line, as it might be incomplete
+    this.lastString = lines.pop() || ''
+
+    // Enqueue each line in the next chunk
+    for (const line of lines) {
+      controller.enqueue(JSON.parse(line).data)
     }
-    return arr;
+  }
+
+  /**
+   * Is called when `fetch` has finished writing to this transform stream.
+   *
+   * @param {TransformStreamDefaultController} controller The controller to enqueue the transformed chunks to.
+   */
+  flush(controller) {
+    // Is there still a line left? Enqueue it
+    if (this.lastString) {
+      controller.enqueue(this.lastString)
+    }
+  }
 }
 
-async function loop(){
-	let stream = await fetch("/stream")
-        .then((response) => response.body.getReader());
-    let data = await streaming_json(stream);
 
-	let plot = new uPlot(opts, tail(data), document.getElementById("chart1"));
+async function loop(){
+
+    // Create a transform stream with our transformer
+    const ts = new TransformStream(new Uint8ArrayToJsonTransformer())
+    // Fetch the text file
+    const response = await fetch('/stream')
+    // Get a ReadableStream on the text file's body
+    const rs = response.body
+    // Apply our Transformer on the ReadableStream to create a stream of strings
+    const lineStream = rs.pipeThrough(ts)
+    // Read the stream of strings
+    const stream = lineStream.getReader()
+  
+    let data = await stream.read().then((d) => d.value)
+    console.log(data)
+	let plot = new uPlot(opts, tail(data), document.getElementById("chart1"))
 	for(;;){
-        let newdata = await streaming_json(stream);
-	    data = data.concat(newdata);
-		//printStats(data);
-		plot.setData(tail(data));
-		//logData(newdata);
+        await stream.read().then((d) => d.value)
+            .then((newdata) => {
+            data = data.concat(newdata)
+            //printStats(data)
+            plot.setData(tail(data))
+            //logData(newdata)
+        })
 		await new Promise(r => requestAnimationFrame(r));//For production
 	}
 }
