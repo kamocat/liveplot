@@ -38,7 +38,7 @@ const opts = {
 var stats;
 
 function printStats(data){
-	axes = ['X','Y','Z'];
+	let axes = ['X','Y','Z'];
 	let s = '';
 	stats = data.slice(1,4).map(a => [Math.min(...a),Math.max(...a)]);
 	for(let i=0; i<3; ++i){
@@ -49,12 +49,49 @@ function printStats(data){
 	e.innerHTML = s;
 }
 
+let axes = ["X accel","Y accel","Z accel"]
+function set_axes_options(){
+    let e = document.getElementById("axis")
+    for( a of axes ){
+        let n = document.createElement("option")
+        n.innerHTML = a
+        e.appendChild(n)
+    }
+}
+function get_axes(){
+    let e = document.getElementById("axis")
+    return axes.findIndex((v) => e.value == v)
+}
+set_axes_options();
+
 function autorange(){
-	let x_min = stats[0][0];
-	let x_max = stats[0][1];
-	margin = 0.1 * (x_max - x_min);
-	document.getElementById("minv").value = x_min - margin;
-	document.getElementById("maxv").value = Number(x_max) + margin;
+    let axis = get_axes()
+	let minv = stats[axis][0]
+	let maxv = stats[axis][1]
+	margin = 0.1 * (maxv - minv)
+	document.getElementById("minv").value = minv - margin
+	document.getElementById("maxv").value = Number(maxv) + margin
+}
+
+let trig_timer = 0
+function get_trigger(){
+    let trg = document.getElementById("trg")
+    let enabled = document.getElementById("en").checked
+    let axis = get_axes()
+    let minv = document.getElementById("minv").value
+    let maxv = document.getElementById("maxv").value
+    let timeout = document.getElementById("timeout").value * 1000
+    if( !enabled ){
+        trg.checked = false
+    } else if((minv < stats[axis][0]) && maxv > stats[axis][1]){
+        if((Date.now() - trig_timer) >  timeout){
+            trg.checked = false
+        }
+    } else {
+        trg.checked = true
+        trig_timer = Date.now()
+    }
+    return trg.checked
 }
 
 /**
@@ -121,14 +158,15 @@ async function loop(){
     const stream = lineStream.getReader()
   
     let data = await stream.read().then((d) => d.value)
-    console.log(data)
 	let plot = new uPlot(opts, tail(data), document.getElementById("chart1"))
 	for(;;){
         await stream.read().then((d) => d.value)
             .then((newdata) => {
             data = data.concat(newdata)
-            //printStats(data)
-            plot.setData(tail(data))
+            let p = tail(data)
+            printStats(p)
+            get_trigger()
+            plot.setData(p)
             //logData(newdata)
         })
 		await new Promise(r => requestAnimationFrame(r));//For production
@@ -160,33 +198,5 @@ function save_recording(data) {
 	tag = document.createElement("li");
 	tag.innerHTML = '<a href="'+URL.createObjectURL(file)+'" download="acceleration_log.csv">Download</a>';
 	document.getElementById("dl").appendChild(tag);
-}
-
-var logged=[[],[],[],[]];
-let timeout=0;
-function logData(newdata){
-	enabled = document.getElementById("en").checked;
-	notEmpty = logged[0].length > 0;
-	//For now, only works with X axis
-	if(enabled){
-		if((Math.min(...newdata[1])<document.getElementById("minv").value)
-		 || (Math.max(...newdata[1])>document.getElementById("maxv").value)){
-			 timeout=0;
-		 } else {
-			 ++timeout;
-		 }
-		if(notEmpty && (timeout > document.getElementById("timeout").value)){
-			save_recording(logged);
-			logged=[[],[],[],[]];
-		} else {
-			for(let i = 0; i < newdata.length; ++i){
-				let a = logged[i].concat(newdata[i]);
-				logged[i] = a.slice(-6000,-1);
-			}
-		}
-	} else if(notEmpty){
-		save_recording(logged);
-		logged=[[],[],[],[]];
-	}
 }
 
