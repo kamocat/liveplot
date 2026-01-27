@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Response
+from fastapi import FastAPI, Response, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 from math import sin, floor
 from time import time
@@ -18,29 +18,30 @@ async def root():
     # Serve a static file
     return FileResponse(path="static/plot.html", media_type="text/html")
 
-async def wave_generator():
-    w = 0.01
+@app.websocket("/stream")
+async def stream(websocket: WebSocket):
+    await websocket.accept()
+    w = 0.1
     amp = 1000
-    w2 = 0.00001
+    w2 = 0.0001
     amp2 = 10000
     i = 0
     inc = 10
-    while True:
-        await asyncio.sleep(0.01)
-        chunk = [(
-            int(amp2*sin(i*w2)*sin(i*w)),
-            int(amp*sin(i*w+1.4)),
-            int(amp*sin(i*w+2.5)))
-            for i in range(i, i+inc) ]
-        data = {"axes":["x","y","z"],"data":chunk}
-        i += inc
-        yield json.dumps(data) + '\n'
+    try:
+        while True:
+            await asyncio.sleep(1)
+            t = range(i, i+inc)
+            chunk = [ list(t),
+                [int(amp2*sin(i*w2)*sin(i*w)) for i in t],
+                [int(amp*sin(i*w+1.4)) for i in t],
+                [int(amp*sin(i*w+2.5)) for i in t],
+                ]
+            data = {"axes":["x","y","z"],"data":chunk}
+            i += inc
+            await websocket.send_json(chunk)
+    except WebSocketDisconnect:
+        return
 
-@app.get("/stream")
-async def stream():
-    return StreamingResponse(wave_generator())
-            
-    
 @app.get("/log.csv")
 async def log():
     # This isn't actual data, we just need it to test the javascript
