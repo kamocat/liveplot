@@ -91,7 +91,7 @@ async function loop(){
 loop();
 
 function tail(data, evt){
-	const hist_len = 500
+	let hist_len = document.getElementById("n_hist").value - 0
 	let nd = JSON.parse(evt)
 	if (data.length > 1){
 		for (i = 0; i < data.length; i++){
