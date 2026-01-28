@@ -1,68 +1,41 @@
-const opts = {
-	title: "Acceleration",
+let opts = {
+	title: "Wireless sensor data",
 	id: "chart1",
 	class: "mychart",
 	width: window.innerWidth*0.7,
 	height: window.innerHeight*0.8,
-	series: [
-		{
-			scale: "seconds",
-			label: "seconds",
-		},{
-			scale: "acceleration",
-			label: "X",
-			stroke:"red",
-			width: 1,
-		},{
-			scale: "acceleration",
-			label: "Y",
-			stroke:"green",
-			width: 1,
-		},{
-			scale: "acceleration",
-			label: "Z",
-			stroke:"blue",
-			width: 1,
-		},
-	],
-	scales: {
-		"seconds": {
-			time: false,
-		},
-		"acceleration": {
-			auto: true,
-		},
-	},
+}
+
+function setColors(){
+	const styles = [{stroke: "red", width:2},
+			{stroke:"blue", width:4},
+			{stroke:"black", width:1, dash:[10,5]},
+			{stroke:"green", width:2, dash:[2,1]},
+			{stroke:"#f0f", width:1.5, dash:[5,2,1]},
+	]
+	for(let i=1; i<opts.series.length; ++i){
+		opts.series[i] = Object.assign(opts.series[i], styles[i-1])
+	}
 }
 
 var stats;
 
 function printStats(data){
-	let axes = ['X','Y','Z'];
+	let labels = opts.series.map(x => x.label).slice(1)
 	let s = '';
-	stats = data.slice(1,4).map(a => [Math.min(...a),Math.max(...a)]);
-	for(let i=0; i<3; ++i){
-		s += axes[i]+'_Min:'+stats[i][0]+"<br>";
-		s += axes[i]+'_Max:'+stats[i][1]+"<br>";
+	stats = data.slice(1).map(a => [Math.min(...a),Math.max(...a)]);
+	for(let i=0; i<labels.length; ++i){
+		s += labels[i]+' min:'+stats[i][0]+"<br>";
+		s += labels[i]+' max:'+stats[i][1]+"<br>";
 	}
 	let e = document.getElementById("stats");
 	e.innerHTML = s;
 }
 
-let axes = ["X accel","Y accel","Z accel"]
-function set_axes_options(){
-	let e = document.getElementById("axis")
-	for( a of axes ){
-		let n = document.createElement("option")
-		n.innerHTML = a
-		e.appendChild(n)
-	}
-}
 function get_axes(){
 	let e = document.getElementById("axis")
 	return axes.findIndex((v) => e.value == v)
 }
-set_axes_options();
 
 function autorange(){
 	let axis = get_axes()
@@ -96,16 +69,20 @@ function get_trigger(){
 
 
 async function loop(){
-
+	await fetch("/header")
+		.then(response => response.json())
+		.then(header => {
+			opts.scales = header.scales
+			opts.series = header.series
+		})
+	setColors()
+	let data = [[]]
+	
 	const socket = new WebSocket("/stream")
-let data = [[], [], [], []]
 	let plot = new uPlot(opts, data, document.getElementById("chart1"))
 	let wt = false
-	socket.addEventListener("message", (event) => {
-		let nd = JSON.parse(event.data)
-		for (i = 0; i < 4; i++){
-			data[i] = data[i].concat(nd[i])
-		}
+	socket.addEventListener("message", (evt) => {
+		data = tail(data, evt.data)
 		printStats(data)
 		plot.setData(data)
 	})
@@ -113,10 +90,19 @@ let data = [[], [], [], []]
 }
 loop();
 
-function tail(data){
-	let t = [];
-	t = [t].concat(data);
-	return t;
+function tail(data, evt){
+	const hist_len = 500
+	let nd = JSON.parse(evt)
+	if (data.length > 1){
+		for (i = 0; i < data.length; i++){
+			data[i] = data[i].concat(nd[i])
+			j = Math.max(0, data[i].length-hist_len)
+			data[i] = data[i].slice(j)
+		}
+	} else {
+		data = nd
+	}
+	return data;
 }
 
 function pretty(matrix) {
