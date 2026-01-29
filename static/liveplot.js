@@ -117,3 +117,9 @@ function save_recording(data) {
 	document.getElementById("dl").appendChild(tag);
 }
 
+async function get_fragment(id, url) {
+	p = document.getElementById(id)
+	await fetch(url).then(response => response.text()).then(html => p.innerHTML=html)
+}
+
+get_fragment('logs', '/logs')
