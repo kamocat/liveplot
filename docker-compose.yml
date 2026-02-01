@@ -1,7 +1,7 @@
 services:
   web:
     build: .
-    command: uvicorn main:app --host 0.0.0.0 --reload
+    command: uvicorn main:server --host 0.0.0.0 --reload
     container_name: uvicorn
     volumes:
       - .:/code
