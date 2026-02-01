@@ -4,9 +4,34 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 import asyncio
 import sensor
 import os
+from contextlib import asynccontextmanager
 
 data = sensor.Sensor()
-server = FastAPI()
+
+fname = None
+
+def make_log():
+    global fname
+    global file
+    files = os.listdir(logdir)
+    files = [x.partition('.')[0] for x in files]
+    files = [int(x) for x in files if x.isdigit()]
+    files.append(0)
+    highest = max(files)
+    fname = f'{highest+1:03d}.txt'
+    data.log(logdir+fname)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print('contextmanager start')
+    make_log()
+    asyncio.create_task(data.run()) # schedules without blocking
+    yield
+    print('stopping contextmanager')
+    data.want_abort=True
+
+
+server = FastAPI(lifespan=lifespan)
 
 @server.get("/")
 async def root(request: Request):
@@ -37,21 +62,6 @@ async def stream(websocket: WebSocket):
             await asyncio.sleep(1)
     except WebSocketDisconnect:
         print('Client disconnected')
-fname = None
-file = None
-
-def make_log():
-    global fname
-    global file
-    files = os.listdir(logdir)
-    files = [x.partition('.')[0] for x in files]
-    files = [int(x) for x in files if x.isdigit()]
-    files.append(0)
-    highest = max(files)
-    fname = f'{highest+1:03d}.txt'
-    data.log(logdir+fname)
-
-make_log()
 
 @server.get("/logs")
 async def list_logs(new: bool=False):
@@ -64,4 +74,3 @@ async def list_logs(new: bool=False):
     else:
         li.insert(0,'<h3 style="color:red">Logging disabled until reboot</h3>')
     return HTMLResponse("\n".join(li))
-

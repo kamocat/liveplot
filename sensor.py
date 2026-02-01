@@ -38,14 +38,16 @@ class Sensor:
     
     def __next__(self):
         #time.sleep(1)
-        return [time.time(), self.r1.value, self.r2.value, self.r3.value]
+        return [round(time.time(),3), self.r1.value, self.r2.value, self.r3.value]
     
     async def run(self):
         for vals in self:
             if self.file is not None:
-                self.file.write(self.delimiter.join(vals)+'\n')
+                print(vals)
+                v = [str(x) for x in vals]
+                self.file.write(self.delimiter.join(v)+'\n')
                 self.file.flush()
-            asyncio.sleep(self.delay)
+            await asyncio.sleep(self.delay)
             if self.want_abort:
                 break
         self.file.close()
